@@ -105,11 +105,16 @@ app.post('/register', async (req, res) => {
     } catch (err) {
       console.error(err);
       
-      // Handle duplicate key error (user already exists) or any other error generically
-      const statusCode = (err.code === '23505' || err.constraint) ? 400 : 500;
-      const message = statusCode === 400 ? genericErrorMessage : 'Registration failed. Please try again later';
+      // Check if it's a unique constraint violation (duplicate email)
+      const isDuplicateEmail = err.code === '23505' || err.constraint;
       
-      return res.status(statusCode).json({ message });
+      if (isDuplicateEmail) {
+        // User tried to register with an email that already exists
+        return res.status(400).json({ message: genericErrorMessage });
+      } else {
+        // Some other database or server error occurred
+        return res.status(500).json({ message: 'Registration failed. Please try again later' });
+      }
     }
 });
   
