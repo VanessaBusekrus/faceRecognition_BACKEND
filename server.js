@@ -36,75 +36,81 @@ app.get('/', async (req, res) => {
   
 
 app.post('/signin', async (req, res) => {
-	const { email, password } = req.body;
+    const { email, password } = req.body;
   
-	try {
-	  // Get the login hash for the given email
-	  const loginData = await db('login')
-		.select('email', 'hash')
-		.where({ email });
+    try {
+      // Get the login hash for the given email
+      const loginData = await db('login')
+        .select('email', 'hash')
+        .where({ email });
   
-	  if (loginData.length === 0) {
-		return res.status(400).json('wrong credentials');
-	  }
+      // Check if user exists and password is valid
+      const userExists = loginData.length > 0;
+      const isValid = userExists && await bcrypt.compare(password, loginData[0].hash);
   
-	  const isValid = await bcrypt.compare(password, loginData[0].hash);
+      if (!userExists || !isValid) {
+        // Single generic message for both cases
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
   
-	  if (isValid) {
-		// Fetch user info
-		const user = await db('users').select('*').where({ email });
+      // Fetch user info (we know user exists and password is correct)
+      const user = await db('users').select('*').where({ email });
   
-		if (user.length) {
-		  return res.json(user[0]);
-		} else {
-		  return res.status(400).json('unable to get user');
-		}
-	  } else {
-		return res.status(400).json('wrong credentials');
-	  }
+      if (user.length) {
+        return res.json(user[0]);
+      } else {
+        // This shouldn't happen if data is consistent, but handle it
+        return res.status(500).json({ message: 'Authentication error' });
+      }
   
-	} catch (err) {
-	  console.error(err);
-	  return res.status(500).json('internal server error');
-	}
-  });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Authentication error' });
+    }
+});
   
-
 app.post('/register', async (req, res) => {
-	const saltRounds = 10; // this will iterate 2^10 times (1024 times)
+    const saltRounds = 10;
+    const genericErrorMessage = 'Registration failed. Please check your information';
   
-	try {
-	  const { email, name, password } = req.body;
-  	  const hash = await bcrypt.hash(password, saltRounds); // hashing the password with a salt round of 10, hence the cost factor
+    try {
+      const { email, name, password } = req.body;
   
-	  // Start a transaction
-	  const newUser = await db.transaction(async trx => {
-		// Insert into login table
-		await trx('login')
-		  .insert({
-			hash: hash,
-			email: email
-		  })
-		  .returning('email');
+      // Basic validation
+      if (!email || !name || !password) {
+        return res.status(400).json({ message: genericErrorMessage });
+      }
   
-		// Insert into users table
-		const insertedUser = await trx('users')
-		  .insert({
-			email: email,
-			name: name,
-			joined: new Date()
-		  })
-		  .returning('*'); // returns an array
+      const hash = await bcrypt.hash(password, saltRounds);
   
-		return insertedUser[0]; // return the newly created user object
-	  });
+      // Start a transaction
+      const newUser = await db.transaction(async trx => {
+        // Insert into login table
+        await trx('login').insert({ hash, email });
   
-	  res.json(newUser); // send the new user as response
+        // Insert into users table
+        const [insertedUser] = await trx('users')
+          .insert({
+            email,
+            name,
+            joined: new Date()
+          })
+          .returning('*');
   
-	} catch (err) {
-	  console.error(err);
-	  res.status(400).json('unable to register');
-	}
+        return insertedUser;
+      });
+  
+      res.json(newUser);
+  
+    } catch (err) {
+      console.error(err);
+      
+      // Handle duplicate key error (user already exists) or any other error generically
+      const statusCode = (err.code === '23505' || err.constraint) ? 400 : 500;
+      const message = statusCode === 400 ? genericErrorMessage : 'Registration failed. Please try again later';
+      
+      return res.status(statusCode).json({ message });
+    }
 });
   
 
