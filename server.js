@@ -126,34 +126,23 @@ app.get('/profile/:id', async (req, res) => {
 });
 
 app.put('/image', async (req, res) => {
-	const { id } = req.body; // destructuring the req.params object
+    const { id, faceCount = 1 } = req.body; // Extract both id and faceCount (default to 1)
 
-	try {
-		const entries = await db('users')
-			.where('id', '=', id)
-			.increment('entries', 1)
-			.returning('entries'); // returning the updated entries count
-		
-		if (entries.length) {
-			res.json(entries[0].entries);
-		} else {
-			res.status(400).json('not found');
-		}
-	} catch (err) {
-		console.error(err);
-		res.status(500).json('unable to get entries');
-	}
-});
-
-app.put('/image', (req, res) => {
-	const { id } = req.body; // destructuring the req.params object
-	db('users').where('id', '=', id)
-	.increment('entries', 1)
-	.returning('entries')
-	.then(entries => {
-		res.json(entries[0].entries);
-	})
-	.catch(err => res.status(400).json('unable to get entries'));
+    try {
+        const entries = await db('users')
+            .where('id', '=', id)
+            .increment('entries', faceCount) // Use faceCount instead of hardcoded 1
+            .returning('entries'); // returning the updated entries count
+        
+        if (entries.length) {
+            res.json(entries[0].entries);
+        } else {
+            res.status(400).json('user not found');
+        }
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).json('unable to get entries');
+    }
 });
 
 // // Load hash from your password DB.
