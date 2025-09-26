@@ -23,14 +23,9 @@ const db = knex({
 	  user: process.env.DB_USER || 'vanessa',
 	  password: process.env.DB_PASSWORD || '',
 	  database: process.env.DB_NAME || 'smart-brain',
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    // ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 	},
 });
-
-// Test database connection
-db.raw('SELECT 1')
-  .then(() => console.log('✅ Database connected'))
-  .catch(err => console.error('❌ Database connection failed:', err.message));
 
 const app = express(); // Initialize the web server - this is the main object that handles all incoming HTTP requests
 app.use(bodyParser.json()); // Middleware that converts JSON strings from frontend into JavaScript objects (req.body)
