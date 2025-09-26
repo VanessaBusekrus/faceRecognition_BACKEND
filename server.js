@@ -18,17 +18,20 @@ dotenv.config();
 const db = knex({
 	client: 'pg',
 	connection: {
-	  host: '127.0.0.1',
-	//   port: 3306,
-	  user: 'vanessa',
-	  password: '',
-	  database: 'smart-brain',
+	  host: process.env.DB_HOST || '127.0.0.1',
+	  port: process.env.DB_PORT || 5432,
+	  user: process.env.DB_USER || 'vanessa',
+	  password: process.env.DB_PASSWORD || '',
+	  database: process.env.DB_NAME || 'smart-brain',
+    ssl: { rejectUnauthorized: false },
 	},
 });
 
 const app = express(); // Initialize the web server - this is the main object that handles all incoming HTTP requests
 app.use(bodyParser.json()); // Middleware that converts JSON strings from frontend into JavaScript objects (req.body)
-app.use(cors()); // Allows frontend (different port/domain) to make requests to this backend API
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*' // Set your deployed frontend URL
+}));
 
 // Route handlers using controller functions
 // Health check
@@ -56,6 +59,6 @@ app.post('/clarifaiAPI', async (req, res) => {
 // In bash, set the PORT variable "PORT=3000 node server.js" or use a .env file
 const PORT = process.env.PORT;
 app.listen(PORT || 3000, () => {
-	console.log(`Server is running on http://localhost:${PORT || 3000}`);
+	console.log(`Server is running on ${PORT || 3000}`);
 });
 
