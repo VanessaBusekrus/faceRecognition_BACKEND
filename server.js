@@ -23,7 +23,7 @@ const db = knex({
 	  user: process.env.DB_USER || 'vanessa',
 	  password: process.env.DB_PASSWORD || '',
 	  database: process.env.DB_NAME || 'smart-brain',
-    // ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 	},
 });
 

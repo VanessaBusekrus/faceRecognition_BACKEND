@@ -23,7 +23,7 @@ const handleRegister = async (req, res, db, bcrypt) => {
         .insert({
             email,
             name,
-            entries: 0, // Initialize entries count
+            entries: 0,
             joined: new Date()
         })
         .returning('*');
