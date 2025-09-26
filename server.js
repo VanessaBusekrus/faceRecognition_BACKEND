@@ -53,7 +53,9 @@ app.post('/clarifaiAPI', async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-	console.log('Server is running on http://localhost:3000');
+// In bash, set the PORT variable "PORT=3000 node server.js" or use a .env file
+const PORT = process.env.PORT;
+app.listen(PORT || 3000, () => {
+	console.log(`Server is running on http://localhost:${PORT || 3000}`);
 });
 
