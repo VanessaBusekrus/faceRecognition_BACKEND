@@ -39,6 +39,10 @@ const handleRegister = async (req, res, db, bcrypt) => {
             return res.status(400).json({ message: 'Registration failed. Please check your information' });
         }
 
+        // Clean and normalize inputs
+        let normalizedEmail = email.trim().toLowerCase();
+        let normalizedName = name.trim();
+
         // Validate password
         const passwordValidation = validatePassword(password);
         if (!passwordValidation.isValid) {
@@ -63,13 +67,13 @@ const handleRegister = async (req, res, db, bcrypt) => {
         // trx = database transaction object provided by Knex.js
         const newUser = await db.transaction(async trx => {
             // Insert into 'login' table
-            await trx('login').insert({ hash, email });
+            await trx('login').insert({ hash, email: normalizedEmail });
 
             // Insert into 'users' table
             const insertedUsers = await trx('users')
             .insert({
-                email,
-                name,
+                email: normalizedEmail,
+                name: normalizedName,
                 entries: 0,
                 joined: new Date()
             })

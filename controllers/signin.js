@@ -2,11 +2,16 @@
 const handleSignin = async (req, res, db, bcrypt) => {
     const { email, password } = req.body;
 
+    let normalizedEmail = email;
+    if (email) {
+        normalizedEmail = email.trim().toLowerCase();
+    }
+
     try {
       // Query the login table to find the email and retrieve its hashed password
       const loginData = await db('login')
         .select('email', 'hash')
-        .where({ email });
+        .where({ email: normalizedEmail });
   
       // loginData is an array of objects. Each object (row) in loginData contains the columns that were selected in the query
       // Check if user exists and password is valid - both boolean values
@@ -20,7 +25,7 @@ const handleSignin = async (req, res, db, bcrypt) => {
   
       // Fetch user info (we know user exists and password is correct), hence we select all columns from users table
       // user is an array of user objects (should contain only one object since emails are unique)
-      const user = await db('users').select('*').where({ email });
+      const user = await db('users').select('*').where({ email: normalizedEmail });
     
       if (user.length) {
         return res.json(user[0]); // Send the first (and only) user object as JSON response to the frontend
