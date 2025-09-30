@@ -3,9 +3,9 @@ const handleImage = async (req, res, db) => {
     const { id, faceCount = 1 } = req.body; // Extract both id and faceCount (default to 1)
 
     try {
-        const entries = await db('users')
+        const entries = await db('users') // 'Entries' is an array of objects (basically, only one object because we are only updating one user)
             .where('id', '=', id)
-            .increment('entries', faceCount) // Use faceCount instead of hardcoded 1
+            .increment('entries', faceCount) // Use faceCount value from frontend instead of hardcoded 1
             .returning('entries'); // returning the updated entries count
         
         if (entries.length) {
