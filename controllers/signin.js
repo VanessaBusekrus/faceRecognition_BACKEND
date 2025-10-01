@@ -6,7 +6,7 @@ const handleSignin = async (req, res, db, bcrypt) => {
     if (email) {
         normalizedEmail = email.trim().toLowerCase();
     }
-
+    
     try {
       // Query the login table to find the email and retrieve its hashed password
       const loginData = await db('login')
@@ -28,7 +28,21 @@ const handleSignin = async (req, res, db, bcrypt) => {
       const user = await db('users').select('*').where({ email: normalizedEmail });
     
       if (user.length) {
-        return res.json(user[0]); // Send the first (and only) user object as JSON response to the frontend
+        if (user[0].two_factor_enabled) {
+          return res.json({
+            requiresTwoFactor: true,
+            userID: user[0].id
+          });
+        }
+        
+        return res.json({
+          id: user[0].id,
+          email: user[0].email,
+          name: user[0].name,
+          entries: user[0].entries,
+          joined: user[0].joined,
+          two_factor_enabled: user[0].two_factor_enabled
+        }); // Send the first (and only) user object as JSON response to the frontend
       } else {
         // Credentials valid, but user row missing
         return res.status(500).json({ message: 'Authentication error' });

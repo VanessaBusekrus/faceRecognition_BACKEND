@@ -4,12 +4,16 @@ import bcrypt from "bcryptjs";
 import cors from 'cors'; // To allow cross-origin requests
 import knex from 'knex'; // To connect to the database
 import dotenv from 'dotenv'; // To load environment variables
+import speakeasy from 'speakeasy'; // For 2FA
+import qrcode from 'qrcode'; // To generate QR codes for 2FA setup
 import { handleRegister } from './controllers/register.js';
 import { handleSignin } from './controllers/signin.js';
 import { handleProfileGet } from './controllers/profile.js';
 import { handleImage } from './controllers/image.js';
 import { handleRoot } from './controllers/root.js';
 import { handleClarifaiAPI }  from './controllers/clarifai.js';
+import { handleEnable2FA, handleVerify2FASetup, handleVerify2FA } from './controllers/2fa.js';
+// import { handleEnable2FA, handleVerify2FASetup, handleSignin2FA, handleVerify2FA, handleDisable2FA } from './controllers/2fa.js';
 
 // Load environment variables
 dotenv.config();
@@ -40,8 +44,11 @@ app.get('/', (req, res) => handleRoot(req, res));
 // Authentication routes
 app.post('/signin', (req, res) => handleSignin(req, res, db, bcrypt));
 app.post('/register', (req, res) => handleRegister(req, res, db, bcrypt));
+app.post('/enable-2fa', (req, res) => handleEnable2FA(req, res, db, speakeasy, qrcode));
+app.post('/verify-2fa-setup', (req, res) => handleVerify2FASetup(req, res, db, speakeasy));
+app.post('/verify-2fa', (req, res) => handleVerify2FA(req, res, db, speakeasy));
 
-// User profile routes
+// User profile routes - retrieving all user data by ID (all data that is in the users table)
 app.get('/profile/:id', (req, res) => handleProfileGet(req, res, db));
 
 // Image processing routes

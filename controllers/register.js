@@ -75,7 +75,10 @@ const handleRegister = async (req, res, db, bcrypt) => {
                 email: normalizedEmail,
                 name: normalizedName,
                 entries: 0,
-                joined: new Date()
+                joined: new Date(),
+                two_factor_enabled: false, // New field to indicate if 2FA is enabled
+                two_factor_secret: null, // Store permanent 2FA secret here
+                temp_two_factor_secret: null // Store temporary 2FA secret here during setup. This is cleared after successful setup.
             })
             .returning('*'); // returning('*') returns all columns of the newly inserted rows, hence all data of the new user
 
