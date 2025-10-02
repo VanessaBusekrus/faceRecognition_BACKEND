@@ -1,11 +1,11 @@
-import express from 'express';
-import bodyParser from 'body-parser'; // To parse the incoming request bodies in a middleware before your handlers, available under the req.body property.
-import bcrypt from "bcryptjs";
-import cors from 'cors'; // To allow cross-origin requests
+import express from 'express'; // Node.js web application framework
+import bodyParser from 'body-parser'; // parsing incoming request bodies in a middleware before your handlers, available under the req.body property.
+import bcrypt from "bcryptjs"; // For hashing passwords
+import cors from 'cors'; // To allow cross-origin requests 
 import knex from 'knex'; // To connect to the database
 import dotenv from 'dotenv'; // To load environment variables
-import speakeasy from 'speakeasy'; // For 2FA
-import qrcode from 'qrcode'; // To generate QR codes for 2FA setup
+import speakeasy from 'speakeasy'; // Node.js library for Two-Factor Authentication. Generates and validates Time-based One-Time Passwords (TOTPs).
+import qrcode from 'qrcode'; // Node.js library to generate QR codes for 2FA setup
 import { handleRegister } from './controllers/register.js';
 import { handleSignin } from './controllers/signin.js';
 import { handleProfileGet } from './controllers/profile.js';
@@ -49,7 +49,7 @@ app.post('/verify-2fa-setup', (req, res) => handleVerify2FASetup(req, res, db, s
 app.post('/verify-2fa', (req, res) => handleVerify2FA(req, res, db, speakeasy));
 
 // User profile routes - retrieving all user data by ID (all data that is in the users table)
-app.get('/profile/:id', (req, res) => handleProfileGet(req, res, db));
+app.get('/profile/:id', (req, res) => handleProfileGet(req, res, db)); // :id is a route parameter - a variable part of the URL that can be accessed via req.params.id
 
 // Image processing routes
 app.put('/image', (req, res) => handleImage(req, res, db));

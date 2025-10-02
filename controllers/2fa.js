@@ -1,4 +1,5 @@
 // helper functions to update a user dynamically based on provided fields
+// 'updates' is an object with key-value pairs representing the columns to be updated and their new values
 const updateUser = async (db, userId, updates) => {
   try {
     // db('users').where({ id }).update(updates).returning('*') is Knex syntax
@@ -38,19 +39,19 @@ const handleEnable2FA = async (req, res, db, speakeasy, QRCode) => {
     }
 
     // Generate secret
-    const secret = speakeasy.generateSecret({
-      name: `Smart Brain - Face Detection (${user.email})`,
-      issuer: 'Smart Brain - Face Detection App',
-      length: 20
+    const secret = speakeasy.generateSecret({ // generate a unique secret for the user that gets encoded with base32
+      name: `Smart Brain - Face Detection (${user.email})`, // used in the otpauth:// URL that Speakeasy generates. Shown in the Authenticator app to identify the account
+      issuer: 'Smart Brain - Face Detection App', // also used in the otpauth:// URL. This is the name of the app
+      length: 20 // specify how long the secret should be. 20 is default - of course the longer the more secure
     });
 
     // Store temporary secret in database (not enabled yet)
     await updateUser(db, userId, { 
-      temp_two_factor_secret: secret.base32 // Store temporarily until verified
+      temp_two_factor_secret: secret.base32 // Store the base32 encoded secret temporarily in the database until user verifies it and enables 2FA
     });
 
     // Generate QR code
-    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
+    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url); // the unique secret is also encoded in the otpauth_url (a URL format that 2FA apps understand), which is then converted to a QR code
 
     res.json({
       qrCode: qrCodeUrl,
@@ -74,17 +75,21 @@ const handleVerify2FASetup = async (req, res, db, speakeasy) => {
     }
     
     // Verify the token using the temporary secret
+    // 1. Takes the secret and decodes it from base32
+    // 2. Calculates the TOTP (Time-based One-Time Password) based on the current time and the previous/next 2 steps (because of window: 2)
+    // 3. Compares the calculated TOTP with the user-entered token
+    // If they match, the token is valid (hence, 'verified' = true)
     const verified = speakeasy.totp.verify({
       secret: user.temp_two_factor_secret,
       encoding: 'base32', // Specify encoding of the secret
       token: String(token), // Ensure token is a string
-      window: 2 // Allow 2 time steps (60 seconds) tolerance
+      window: 2 // Allow 2 time steps (60 seconds) tolerance. Each step = 30 seconds → window of 2 steps = 2 × 30s = 60 seconds in each direction. So the server will accept codes from: 60 seconds ago, current 30-second step and next 60 seconds
     });
 
     if (verified) {
       // Move temp secret to permanent and enable 2FA
       await updateUser(db, userId, {
-        two_factor_secret: user.temp_two_factor_secret, // ‼️ Move temp secret to permanent - WHY?
+        two_factor_secret: user.temp_two_factor_secret,
         two_factor_enabled: true,
         temp_two_factor_secret: null // Clear temporary secret
       });
@@ -113,10 +118,10 @@ const handleVerify2FA = async (req, res, db, speakeasy) => {
 
     // Verify the 2FA code
     const verified = speakeasy.totp.verify({
-      secret: user.two_factor_secret,
-      encoding: 'base32', // Specify encoding of the secret
-      token: String(code), // Ensure code is a string
-      window: 2
+      secret: user.two_factor_secret, // Use the permanent secret stored in the database
+      encoding: 'base32', // Tells speakeasy that the secret is base32 encoded
+      token: String(code), // the 6-digit code from the user - String() ensures it's treated as a string
+      window: 2 // Allow 2 time steps (60 seconds) tolerance
     });
 
     if (verified) {
@@ -149,6 +154,3 @@ ALTER TABLE users ADD COLUMN temp_two_factor_secret VARCHAR(255);
 */
 
 export { handleEnable2FA, handleVerify2FASetup, handleVerify2FA };
-
-
-// Note: Helper functions like getUserById, authenticateUser, and verifyPassword are assumed to be defined elsewhere in your codebase.
