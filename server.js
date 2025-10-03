@@ -1,7 +1,7 @@
 import express from 'express'; // Node.js web application framework
 import bodyParser from 'body-parser'; // parsing incoming request bodies in a middleware before your handlers, available under the req.body property.
 import bcrypt from "bcryptjs"; // For hashing passwords
-import cors from 'cors'; // To allow cross-origin requests 
+import cors from 'cors'; // To allow cross-origin requests. CORS = Cross-Origin Resource Sharing. A mechanism that allows restricted resources on a web page to be requested from another domain outside the domain from which the resource originated.
 import knex from 'knex'; // To connect to the database
 import dotenv from 'dotenv'; // To load environment variables
 import speakeasy from 'speakeasy'; // Node.js library for Two-Factor Authentication. Generates and validates Time-based One-Time Passwords (TOTPs).
@@ -13,7 +13,6 @@ import { handleImage } from './controllers/image.js';
 import { handleRoot } from './controllers/root.js';
 import { handleClarifaiAPI }  from './controllers/clarifai.js';
 import { handleEnable2FA, handleVerify2FASetup, handleVerify2FA } from './controllers/2fa.js';
-// import { handleEnable2FA, handleVerify2FASetup, handleSignin2FA, handleVerify2FA, handleDisable2FA } from './controllers/2fa.js';
 
 // Load environment variables
 dotenv.config();
@@ -27,14 +26,13 @@ const db = knex({
 	    user: process.env.DB_USER,
 	    password: process.env.DB_PASSWORD,
 	    database: process.env.DB_NAME,
-        // ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 	},
 });
 
 const app = express(); // Initialize the web server - this is the main object that handles all incoming HTTP requests
 app.use(bodyParser.json()); // Middleware that converts JSON strings from frontend into JavaScript objects (req.body)
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*' // Set your deployed frontend URL
+  origin: process.env.FRONTEND_URL // Set your deployed frontend URL that is allowed to make requests to this backend
 }));
 
 // Route handlers using controller functions

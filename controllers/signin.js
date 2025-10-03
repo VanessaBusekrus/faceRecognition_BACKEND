@@ -16,6 +16,7 @@ const handleSignin = async (req, res, db, bcrypt) => {
       // loginData is an array of objects. Each object (row) in loginData contains the columns that were selected in the query
       // Check if user exists and password is valid - both boolean values
       const userExists = loginData.length > 0;
+      // bcrypt.compare reads the cost factor and salt from the stored hash, then re-hashes the provided password with the same salt and cost to compare them
       const isValid = userExists && await bcrypt.compare(password, loginData[0].hash); // If userExists is false, isValid will be false without calling bcrypt.compare
   
       if (!userExists || !isValid) {

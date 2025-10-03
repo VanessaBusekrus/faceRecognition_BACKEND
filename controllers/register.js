@@ -1,6 +1,6 @@
 // User registration - creates a new user account with email, name, and hashed password
 const handleRegister = async (req, res, db, bcrypt) => {
-    const saltRounds = 10; // How many times bcrypt will scramble the password - higher = more secure but slower
+    const saltRounds = 10; // How many times bcrypt will scramble the password - higher = more secure but slower. 2^10 = 1024 iterations
 
     // Password validation function
     const validatePassword = (password) => {
